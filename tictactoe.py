@@ -73,16 +73,18 @@ class tictactoe:
         # no winner yet
         return None
 
-    def updateServer(self):
-        # TODO: implement socket stuff once the server is capable of storing
-        #     game data
-        pass
+    # def updateServer(self):
+    #     # TODO: implement socket stuff once the server is capable of storing
+    #     #     game data
+    #     pass
 
     def playTurn(self, player):
         if not self.active:
-            print('This game has already ended. The winner was {}.'.format(self.winner))
+            print('This game has ended. The winner was {}.'.format(self.winner))
             return
-
+        if player != self.currentTurn:
+            print("It\'s not your turn!")
+            return
         print('It\'s your turn, user {}!\n'.format(player))
         self.printBoard()
         row = input('Enter a row number (0,1,2): ')
