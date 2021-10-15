@@ -31,23 +31,30 @@ while True:
             c.sendall('Who are you? (0,1,2)'.encode())
             id = c.recv(1024).decode()
 
-        new_messages = ''
-        for mess in unsent_messages[int(id)]:
-            new_messages += 'Message from user {}: {}\n'.format(mess[0], mess[1])
-        if new_messages:
-            c.sendall((new_messages + 'Hello {}, who are you sending to?'.format(id)).encode())
-            unsent_messages[int(id)] = []
-        else:
-            c.sendall(('Hello {}, who are you sending to?'.format(id)).encode()) #esablish destination
-        dest = c.recv(1024).decode()
-        while dest not in ['0','1','2']:
-            c.sendall(('Hello {}, who are you sending to? (0,1,2)'.format(id)).encode())
-            dest = c.recv(1024).decode()
+        if len(unsent_messages[int(id)]) > 0:
+            c.sendall(unsent_messages[int(id)][0].encode())
 
-        c.sendall(('Message to {}: what would you like to say?'.format(dest)).encode()) #esablish message
-        message = c.recv(1024).decode()
+        gameUpdate = c.recv(1024).decode()
+        gameUpdate.players
 
-        c.sendall(('Message to {}: Sent'.format(dest)).encode()) #Confirmation
+
+        # new_messages = ''
+        # for mess in unsent_messages[int(id)]:
+        #     new_messages += 'Message from user {}: {}\n'.format(mess[0], mess[1])
+        # if new_messages:
+        #     c.sendall((new_messages + 'Hello {}, who are you sending to?'.format(id)).encode())
+        #     unsent_messages[int(id)] = []
+        # else:
+        #     c.sendall(('Hello {}, who are you sending to?'.format(id)).encode()) #esablish destination
+        # dest = c.recv(1024).decode()
+        # while dest not in ['0','1','2']:
+        #     c.sendall(('Hello {}, who are you sending to? (0,1,2)'.format(id)).encode())
+        #     dest = c.recv(1024).decode()
+        #
+        # c.sendall(('Message to {}: what would you like to say?'.format(dest)).encode()) #esablish message
+        # message = c.recv(1024).decode()
+        #
+        # c.sendall(('Message to {}: Sent'.format(dest)).encode()) #Confirmation
         c.close()
 
         unsent_messages[int(dest)].append((id,message))

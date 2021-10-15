@@ -1,6 +1,6 @@
 
 import socket
-from tictactoe.py import tictactoe
+import tictactoe
 
 s = socket.socket()
 
