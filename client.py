@@ -1,6 +1,6 @@
 
 import socket
-import tictactoe
+from tictactoe import tictactoe
 
 s = socket.socket()
 
@@ -16,7 +16,7 @@ id = str(input())
 while id:
     s.sendall(id.encode())
     recvd_msg = s.recv(1024).decode()
-    if is_instance(recvd_msg, tictactoe):
+    if isinstance(recvd_msg, tictactoe):
         if not recvd_msg.active:
             recvd_msg.playTurn(id)
         else:

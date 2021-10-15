@@ -1,5 +1,6 @@
 
 import socket
+from tictactoe import tictactoe
 
 # user ids = 0, 1, 2
 info = ["Im 0", "Im 1", "Im 2"]
@@ -33,9 +34,18 @@ while True:
 
         if len(unsent_messages[int(id)]) > 0:
             c.sendall(unsent_messages[int(id)][0].encode())
+            temp = unsent_messages[int(id)].pop()
+            dest = temp.players[0]
+            if dest == id:
+                dest = temp.players[1]
+        else:
+            c.sendall("Who do you want to start a game with?".encode())
+            dest = c.recv(1024).decode()
+            message = tictactoe(dest,id)
+            c.sendall(message.encode())
 
         gameUpdate = c.recv(1024).decode()
-        gameUpdate.players
+        #gameUpdate.players
 
 
         # new_messages = ''
@@ -57,7 +67,7 @@ while True:
         # c.sendall(('Message to {}: Sent'.format(dest)).encode()) #Confirmation
         c.close()
 
-        unsent_messages[int(dest)].append((id,message))
+        unsent_messages[int(dest)].append((id,gameUpdate))
 
 
 
