@@ -13,7 +13,7 @@ class tictactoe:
                       ['   ', '   ', '   ']]
         self.players = (p1,p2)
         # p1 will be X and p2 will be O by default
-        self.symbols = ('X','O')
+        # self.symbols = ('X','O')
         self.currentTurn = p1
         self.winner = None
 
@@ -31,7 +31,7 @@ class tictactoe:
         if self.board[row][col] != '   ':
             return False
         else:
-            symbol = 'X' if player == players[0] else 'O'
+            symbol = 'X' if player == self.players[0] else 'O'
             self.board[row][col] = ' ' + symbol + ' '
             return True
 
@@ -78,13 +78,15 @@ class tictactoe:
     #     #     game data
     #     pass
 
+    # returns True if the game is still running, False if the game has ended
     def playTurn(self, player):
         if not self.active:
             print('This game has ended. The winner was {}.'.format(self.winner))
-            return
+            return False
         if player != self.currentTurn:
             print("It\'s not your turn!")
-            return
+            print('It\'s currently {}\'s turn. You are {}.'.format(self.currentTurn, player)) # debug
+            return False
         print('It\'s your turn, user {}!\n'.format(player))
         self.printBoard()
         row = input('Enter a row number (0,1,2): ')
@@ -110,25 +112,27 @@ class tictactoe:
             if valid:
                 valid = self.updateBoard(player, row, col)
         print('\nMove completed!\n')
-        self.currentTurn = (players[1] if self.currentTurn == players[0] else players[0])
-        # TODO: send update message to server
+        self.currentTurn = (self.players[1] if self.currentTurn == self.players[0] else self.players[0])
 
         self.winner = self.checkWinner()
         if self.winner:
             self.active = False
             self.printBoard()
             print('{} is the winner!'.format(self.winner))
-            # TODO: send final update message to server indicating game is over
+            return False
         elif self.allSpacesFilled():
             self.winner = 'nobody'
             self.active = False
             self.printBoard()
             print('It\'s a tie!')
-            # TODO: send final update message to server indicating game is over
+            return False
+
+        return True
 
 # testing
 if __name__ == "__main__":
     players = ['p1', 'p2']
     game = tictactoe(players[0], players[1])
-    while not game.winner:
-        game.playTurn(game.currentTurn)
+    gameRunning = True
+    while gameRunning:
+        gameRunning = game.playTurn(game.currentTurn)
