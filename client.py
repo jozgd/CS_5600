@@ -1,6 +1,8 @@
 
 import socket
+import pickle
 from tictactoe import tictactoe
+from helper_functions import dataToSend, chatMessage, sendData
 
 s = socket.socket()
 
@@ -10,24 +12,13 @@ port = 12345
 # connect to the server on local computer
 s.connect(('127.0.0.1', port))
 
-# "Who are you?"
-print (s.recv(1024).decode())
-id = str(input())
-while id:
-    s.sendall(id.encode())
-    recvd_msg = s.recv(1024).decode()
-    if isinstance(recvd_msg, tictactoe):
-        if not recvd_msg.active:
-            recvd_msg.playTurn(id)
-        else:
-            recvd_msg.playTurn(id)
-            s.sendall(recvd_msg.encode())
-
-    else:
-        print(recvd_msg)
-        id = str(input())
-
-# id = str(input()[0])
-# s.sendall(id.encode())
+id = str(input('Who are you? '))
+sendData(s, dataToSend('id', int(id)))
+resp = pickle.loads(s.recv(1024))
+while resp.data == False:
+    id = str(input('Who are you? '))
+    sendData(s, dataToSend('id', int(id)))
+    resp = pickle.loads(s.recv(1024))
+print('Identity verified successfully!')
 
 s.close()

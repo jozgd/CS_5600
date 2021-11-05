@@ -1,12 +1,103 @@
 
 import socket
+import pickle
 from tictactoe import tictactoe
+from helper_functions import dataToSend, chatMessage, sendData
+
+# Generic function for server to handle data received from client
+def recvFromClient():
+    data = pickle.loads(c.recv(1024))
+    type = data.type
+    if type == 'id':
+        verifyIdentity(data)
+    elif type == 'request':
+        clientRequest(data)
+    elif type == 'msg':
+        all_messages.append(data.data)
+        sendData(c, dataToSend('ok'))
+    elif type == 'checkUnread':
+        checkUnread(data)
+    elif type == 'markRead':
+        markRead(data)
+    else:
+        sendData(c, dataToSend('error', 'Server was unable to parse received data.'))
+    return
+
+# verify user identity
+def verifyIdentity(req):
+    print('verifyIdentity')
+    id = req.data
+    valid = True
+    if id not in [0,1,2]:
+        valid = False
+    print('Client ID', id, 'is' if valid else 'is not', 'valid.')
+    sendData(c, dataToSend('id', valid))
+    return
+
+# Get list of open chats/messages for a client's user ID
+# req: dataToSend object
+def clientRequest(req):
+    type = req.data[0]
+    if type == 'chats':
+        getOpenChats(req)
+    elif type == 'msgs':
+        getMsgs(req)
+        pass
+    else:
+        sendData(c, dataToSend('error', 'Server could not recognize request for data.'))
+    return
+
+# get list of open chats and return to client
+def getOpenChats(req):
+    req_user = req.data[1]
+    chatting_users = []
+    for msg in all_messages:
+        if msg.sender == req_user and msg.receiver not in chatting_users:
+            chatting_users.append(msg.receiver)
+        elif msg.receiver == req_user and msg.sender not in chatting_users:
+            chatting_users.append(msg.sender)
+    sendData(c, dataToSend('chats', chatting_users))
+    return
+
+# get all messages betweent two users
+def getMsgs(req):
+    u1 = req.data[1]
+    u2 = req.data[2]
+    msgs = []
+    for msg in all_messages:
+        if msg.sender in (u1,u2) and msg.receiver in (u1,u2):
+            if msg.unread == True:
+                msg.unread = False
+            msgs.append(msg)
+    sendData(c, dataToSend('msgs', msgs))
+
+# check for unread messages
+def getUnreadMsgs(req):
+    unreadMsgs = False
+    req_user = req.data
+    chatting_users = []
+    for msg in all_messages:
+        if msg.receiver == req_user and msg.unread == True and msg.sender not in chatting_users:
+            unreadMsgs = True
+            chatting_users.append(msg.sender)
+    sendData(c, dataToSend('unread', (unreadMsgs, chatting_users)))
+    return
+
+# mark messages as read
+def markRead(req):
+    recv = req.data[0]
+    send = req.data[1]
+    for msg in all_messages:
+        if msg.sender == send and msg.receiver == recv and msg.unread == True:
+            msg.unread = False
+    sendData(c, dataToSend('ok'))
+    return
 
 # user ids = 0, 1, 2
-info = ["Im 0", "Im 1", "Im 2"]
+info = ["user 0", "user 1", "user 2"]
 
 s = socket.socket()
-print ("Socket successfully created")
+# print ("Socket successfully created")
 
 port = 12345
 
@@ -14,69 +105,15 @@ s.bind(('', port))
 print ("socket binded to %s" %(port))
 
 s.listen(5)
-print ("socket is listening")
+# print ("socket is listening")
 
 # messages for ids 0, 1, 2
-unsent_messages = [[], [], []]
+all_messages = []
 
 while True:
-
-    c, addr = s.accept() #establsih connection
+    print('waiting for connection')
+    c, addr = s.accept() #establish connection
     with c:
-        print ('Got connection from', addr )
-        c.sendall('Who are you?'.encode()) #esablish identity
-        id = c.recv(1024).decode()
-        if not id:
-            break
-        while id not in ['0','1','2']:
-            c.sendall('Who are you? (0,1,2)'.encode())
-            id = c.recv(1024).decode()
-
-        if len(unsent_messages[int(id)]) > 0:
-            c.sendall(unsent_messages[int(id)][0].encode())
-            temp = unsent_messages[int(id)].pop()
-            dest = temp.players[0]
-            if dest == id:
-                dest = temp.players[1]
-        else:
-            c.sendall("Who do you want to start a game with?".encode())
-            dest = c.recv(1024).decode()
-            message = tictactoe(dest,id)
-            c.sendall(message.encode())
-
-        gameUpdate = c.recv(1024).decode()
-        #gameUpdate.players
-
-
-        # new_messages = ''
-        # for mess in unsent_messages[int(id)]:
-        #     new_messages += 'Message from user {}: {}\n'.format(mess[0], mess[1])
-        # if new_messages:
-        #     c.sendall((new_messages + 'Hello {}, who are you sending to?'.format(id)).encode())
-        #     unsent_messages[int(id)] = []
-        # else:
-        #     c.sendall(('Hello {}, who are you sending to?'.format(id)).encode()) #esablish destination
-        # dest = c.recv(1024).decode()
-        # while dest not in ['0','1','2']:
-        #     c.sendall(('Hello {}, who are you sending to? (0,1,2)'.format(id)).encode())
-        #     dest = c.recv(1024).decode()
-        #
-        # c.sendall(('Message to {}: what would you like to say?'.format(dest)).encode()) #esablish message
-        # message = c.recv(1024).decode()
-        #
-        # c.sendall(('Message to {}: Sent'.format(dest)).encode()) #Confirmation
-        c.close()
-
-        unsent_messages[int(dest)].append((id,gameUpdate))
-
-
-
-
-
-
-
-
-
-
+        recvFromClient()
 
     #break #TEMP
