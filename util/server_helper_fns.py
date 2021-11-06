@@ -87,6 +87,7 @@ def getUnreadMsgs(c, req):
     return
 
 # mark messages as read
+# I don't think this gets used anywhere right now, but it might be useful later
 def markRead(c, req):
     recv = req.data[0]
     send = req.data[1]

@@ -1,0 +1,13 @@
+use pygame for gui
+- figure out how to do text
+- start with just buttons to pick user, text box to send messages
+
+pickle for saving data in files
+- one file per user
+- all chats compound in each pickle
+- object to be pickled = "conversation" class
+- to start, have separate conversations for text messaging and game instances
+
+conversation class
+- list of chatMessage objects
+- var storing who the convo is with

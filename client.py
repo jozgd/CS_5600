@@ -9,20 +9,19 @@ import util.client_helper_fns as chf
 id = None
 
 if __name__ == "__main__":
+    # "Who are you?"
     id = chf.validateIdentity()
+    # get chats
     chats = chf.getChats(id)
-    # if chats == []:
-    #     print('\nYou have no conversations.')
-    #     new = str(input('Would you like to start a new one? (y/N) '))
-    #     if new != '' and new[0].lower() == 'y':
-    #         recvID = chf.selectUser()
-    #         chf.writeSendMsg(recvID)
-    opt = '+'
-    while opt in [str(x) for x in chats] + ['+']:
+    opt = None
+    # loop through menu
+    while True:
+        # chats will refresh every time menu is reloaded
+        # todo (when GUI is built): add auto-refresh
         chats = chf.getChats(id)
         chf.printChats(id, chats)
         chf.printChatMenu(chats)
-        opt = str(input('Select an option (press ENTER to exit): '))
+        opt = str(input('Select an option (type \'~\' to exit): '))
         print()
         # client selected user chat to open
         if opt in [str(x) for x in chats]:
@@ -30,6 +29,7 @@ if __name__ == "__main__":
             msgs = chf.getMsgs(id, otherID)
             for msg in msgs.data:
                 msg.printMsg(id)
+            # todo: add in game functionality
             opt2 = str(input('\nReply? (y/N) '))
             if opt2 != '' and opt2[0].lower() == 'y':
                 chf.writeSendMsg(id, otherID)
@@ -38,5 +38,5 @@ if __name__ == "__main__":
             recvID = chf.selectUser()
             chf.writeSendMsg(id, recvID)
         # client wants to quit
-        elif opt == '':
+        elif opt == '~':
             break

@@ -1,5 +1,5 @@
 # Gabrielle
-# Classes and functions for use by ANY file
+# Classes and functions for use by ANY host
 
 import pickle
 import socket
