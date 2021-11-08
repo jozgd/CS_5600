@@ -6,7 +6,7 @@ import socket
 from util.helper_functions import *
 
 # messages for ids 0, 1, 2
-all_messages = []
+all_convos = []
 
 # Generic function for server to handle data received from client
 def recvFromClient(c):
@@ -16,9 +16,8 @@ def recvFromClient(c):
         verifyIdentity(c,data)
     elif type == 'request':
         clientRequest(c,data)
-    elif type == 'msg':
-        all_messages.append(data.data)
-        sendData(c, dataToSend('ok'))
+    elif type == 'convo':
+        updateConvo(c,data)
     elif type == 'checkUnread':
         getUnreadMsgs(c,data)
     elif type == 'markRead':
@@ -43,8 +42,8 @@ def clientRequest(c, req):
     type = req.data[0]
     if type == 'chats':
         getOpenChats(c,req)
-    elif type == 'msgs':
-        getMsgs(c,req)
+    elif type == 'convo':
+        getConvo(c,req)
         pass
     else:
         sendData(c, dataToSend('error', 'Server could not recognize request for data.'))
@@ -54,35 +53,51 @@ def clientRequest(c, req):
 def getOpenChats(c, req):
     req_user = req.data[1]
     chatting_users = []
-    for msg in all_messages:
-        if msg.sender == req_user and msg.receiver not in chatting_users:
-            chatting_users.append(msg.receiver)
-        elif msg.receiver == req_user and msg.sender not in chatting_users:
-            chatting_users.append(msg.sender)
+    for convo in all_convos:
+        if convo.isInChat(req_user) and int(convo.isInChat(req_user)) not in chatting_users:
+            chatting_users.append(int(convo.isInChat(req_user)))
     sendData(c, dataToSend('chats', chatting_users))
     return
 
 # get all messages betweent two users
-def getMsgs(c, req):
+def getConvo(c, req):
     clientID = req.data[1]
     otherID = req.data[2]
-    msgs = []
-    for msg in all_messages:
-        if msg.sender in (clientID,otherID) and msg.receiver in (clientID,otherID):
-            msgs.append(msg)
-            if msg.receiver == clientID and msg.unread == True:
-                msg.unread = False
-    sendData(c, dataToSend('msgs', msgs))
+    convoToSend = None
+    for convo in all_convos:
+        if convo.isInChat(clientID, otherID):
+            for msg in convo.msgList:
+                if msg.receiver == clientID and msg.unread == True:
+                    msg.unread = False
+            convoToSend = convo
+            break
+    sendData(c, dataToSend('convo', convoToSend))
+
+
+# replace existing convo with updated one
+def updateConvo(c, req):
+    newConvo = req.data
+    for i in range(len(all_convos)):
+        if all_convos[i].isInChat(newConvo.user1, newConvo.user2):
+            all_convos[i] = newConvo
+            break
+        sendData(c, dataToSend('ok'))
+        return
+    all_convos.append(newConvo)
+    sendData(c, dataToSend('ok'))
+
 
 # check for unread messages
 def getUnreadMsgs(c, req):
     unreadMsgs = False
     req_user = req.data
     chatting_users = []
-    for msg in all_messages:
-        if msg.receiver == req_user and msg.unread == True and msg.sender not in chatting_users:
-            unreadMsgs = True
-            chatting_users.append(msg.sender)
+    for convo in all_convos:
+        for msg in convo.msgList:
+            if msg.receiver == req_user and msg.unread == True and msg.sender not in chatting_users:
+                unreadMsgs = True
+                chatting_users.append(msg.sender)
+                break
     sendData(c, dataToSend('unread', (unreadMsgs, chatting_users)))
     return
 
@@ -91,8 +106,11 @@ def getUnreadMsgs(c, req):
 def markRead(c, req):
     recv = req.data[0]
     send = req.data[1]
-    for msg in all_messages:
-        if msg.sender == send and msg.receiver == recv and msg.unread == True:
-            msg.unread = False
+    for convo in all_convos:
+        if convo.isInChat(send, recv):
+            for msg in convo:
+                if msg.sender == send and msg.receiver == recv and msg.unread == True:
+                    msg.unread = False
+            break
     sendData(c, dataToSend('ok'))
     return

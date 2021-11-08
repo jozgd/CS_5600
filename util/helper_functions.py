@@ -5,6 +5,7 @@ import pickle
 import socket
 from tictactoe import tictactoe
 
+
 # Generic class for data sent between client & server
 class dataToSend:
     def __init__(self, type, data=None):
@@ -26,6 +27,7 @@ class dataToSend:
         # - checkUnread: client ID
         # - markRead: [client ID, other ID]
         self.data = data
+
 
 # keeps track of message ids. I don't know if this will work tbh
 msg_id = 0
@@ -50,10 +52,36 @@ class chatMessage:
         # if type == 'msg', just print the text
         # if type == 'game', allow the user to take their turn
         if self.type == 'msg':
-            print(('*' if self.unread else '') + str(self.sender) + ': "' + self.data + '"')
+            print(('*' if self.unread and self.receiver == viewer else '') + str(self.sender) + ': "' + self.data + '"')
         elif self.type == 'game':
             self.data.playTurn(viewer)
         return
+
+
+# chat conversation class to store a conversation between two users
+class chatConvo:
+    def __init__(self, user1, user2, msgList=[]):
+        # user ids involved in conversation
+        self.user1 = user1
+        self.user2 = user2
+        # msgList is a list of chatMessage objects. defaults to empty list
+        self.msgList = msgList
+
+    # adds message to msgList
+    def addMessage(self, msg):
+        self.msgList.append(msg)
+
+    # checks if user(s) belong to chat. not sure if this will be useful when
+    #   file management is implemented
+    def isInChat(self, user1, user2=None):
+        if user2:
+            if (user1, user2) == (self.user1, self.user2) or (user1, user2) == (self.user2, self.user1):
+                return True
+        else:
+            if user1 in (self.user1, self.user2):
+                return str(self.user2) if user1 == self.user1 else str(self.user1)
+        return False
+
 
 # Generic function for pickling/sending data to host named 'dest'
 def sendData(dest, pkg):

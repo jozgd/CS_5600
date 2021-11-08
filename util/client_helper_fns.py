@@ -80,8 +80,8 @@ def printChats(id, chats):
 
 
 # gets all messages between client 'id' and user 'otherID'
-def getMsgs(id, otherID):
-    return sendToServer(dataToSend('request', ['msgs', id, otherID]))
+def getConvo(id, otherID):
+    return sendToServer(dataToSend('request', ['convo', id, otherID]))
 
 
 # client writes and sends a message
@@ -89,7 +89,12 @@ def writeSendMsg(id, recvID):
     # todo: allow option to start game
     msg = str(input('Write your message below. (Press ENTER to send.)\n'))
     msgObj = chatMessage('msg', id, recvID, msg)
-    ok = sendToServer(dataToSend('msg', msgObj))
+    convo = getConvo(id,recvID).data
+    if not convo:
+        convo = chatConvo(id, recvID, [msgObj])
+    else:
+        convo.addMessage(msgObj)
+    ok = sendToServer(dataToSend('convo', convo))
     if ok.type == 'error':
         print(ok.data)
     return

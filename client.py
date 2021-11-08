@@ -26,8 +26,8 @@ if __name__ == "__main__":
         # client selected user chat to open
         if opt in [str(x) for x in chats]:
             otherID = int(opt)
-            msgs = chf.getMsgs(id, otherID)
-            for msg in msgs.data:
+            convo = chf.getConvo(id, otherID)
+            for msg in convo.data.msgList:
                 msg.printMsg(id)
             # todo: add in game functionality
             opt2 = str(input('\nReply? (y/N) '))
