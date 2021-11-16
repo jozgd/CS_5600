@@ -1,81 +1,106 @@
 # Gabrielle
 
-import pygame
+import pygame as pg
 from pygame.locals import *
-
-color_inactive = pygame.Color('lightskyblue3')
-color_active = pygame.Color('dodgerblue2')
-
-class InputBox:
-
-    def __init__(self, x, y, w, h, text=''):
-        self.rect = pygame.Rect(x, y, w, h)
-        self.color = COLOR_INACTIVE
-        self.text = text
-        self.txt_surface = FONT.render(text, True, self.color)
-        self.active = False
-
-    def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
-                self.active = not self.active
-            else:
-                self.active = False
-            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
-        if event.type == pygame.KEYDOWN:
-            if self.active:
-                if event.key == pygame.K_RETURN:
-                    print(self.text)
-                    self.text = ''
-                elif event.key == pygame.K_BACKSPACE:
-                    self.text = self.text[:-1]
-                else:
-                    self.text += event.unicode
-                self.txt_surface = FONT.render(self.text, True, self.color)
-
-    def update(self):
-        width = max(200, self.txt_surface.get_width()+10)
-        self.rect.w = width
-
-    def draw(self, screen):
-        screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
-        pygame.draw.rect(screen, self.color, self.rect, 2)
+import client as c
+import util.helper_functions as hf
+import util.client_helper_fns as chf
 
 def main():
     # start the app
-    pygame.init()
+    pg.init()
+
+    defaultFont = pg.font.SysFont('Calibri', 28)
+    msgFont = pg.font.SysFont('Calibri', 22)
+    msgColor = pg.color.Color('white')
+    bubbleColor = pg.color.Color('royalblue')
+    activeColor = pg.color.Color('azure2')
+    inactiveColor = pg.color.Color('azure3')
 
     # set screen resolution
-    screen = pygame.display.set_mode((1024, 608))
+    screen = pg.display.set_mode((1024, 608))
     # set title of window
-    pygame.display.set_caption('PyMessage')
+    pg.display.set_caption('PyMessage')
     # makes the mouse visible on the screen
-    pygame.mouse.set_visible(1)
+    pg.mouse.set_visible(1)
 
     # make background
-    bg = pygame.Surface(screen.get_size())
+    bg = pg.Surface(screen.get_size())
     bg = bg.convert()
     bg.fill((225, 225, 225))
 
-    textBox = pygame.Rect(100, 100, 140, 32)
+    # make textbox and textbox accessories
+    textBox = pg.Rect(50, 526, 924, 32)
+    tbActive = False
+    tbColor = inactiveColor
+    userText = ''
 
-
+    # make chatbox (to hold displayed chat messages) and chatbox accessories
+    # chatMessages holds a list of chatMessage objects from helper_functions.py,
+    #   much like the chatConvo object does
+    # todo:
+    # - implement chatConvo
+    # - make window scrollable
+    chatBox = pg.Rect(50, 50, 924, 451)
+    cbColor = pg.color.Color((255,255,255))
+    chatMessages = []
 
     # clock tick object for fps
-    clock = pygame.time.Clock()
+    clock = pg.time.Clock()
 
     while True:
         # declares max framerate, keeps app alive
         clock.tick(60)
-        for e in pygame.event.get():
+        for e in pg.event.get():
             # quit the app
             if e.type == QUIT:
                 return
-        # draw objects on screen
-        screen.blit(bg, (0,0))
-        pygame.display.flip()
+            if e.type == MOUSEBUTTONDOWN:
+                tbActive = True if textBox.collidepoint(e.pos) else False
+            if tbActive:
+                if e.type == KEYDOWN:
+                    if e.key == K_RETURN:
+                        newMsg = hf.chatMessage('msg', 0, 1, userText)
+                        chatMessages.append(newMsg)
+                        userText = ''
+                    elif e.key == K_BACKSPACE:
+                        userText = userText[:-1]
+                    else:
+                        tsTemp = defaultFont.render(userText+e.unicode, True, (0,0,0))
+                        if tsTemp.get_width() > textBox.w-10:
+                            pass
+                        else:
+                            userText += e.unicode
+        # set color of textbox based on whether it's active
+        tbColor = activeColor if tbActive else inactiveColor
 
-    pygame.quit()
+        # place objects on screen
+        screen.blit(bg, (0,0))
+        # draw textbox and surface for input text to show
+        pg.draw.rect(screen, tbColor, textBox)
+        textSurface = defaultFont.render(userText, True, (25,25,25))
+        screen.blit(textSurface, (textBox.x+5, textBox.y+5))
+        # draw chat window and chat bubbles
+        pg.draw.rect(screen, cbColor, chatBox)
+        # set initial pos values for first message
+        bubbleX = chatBox.x+5
+        bubbleY = chatBox.y+5
+        # print all chat messages
+        # todo: implement way to create different bubbles depending on whether
+        #   message is from client or other user
+        for msg in chatMessages:
+            chatText = msgFont.render(msg.data, True, msgColor)
+            bubble = pg.Rect(bubbleX, bubbleY, chatText.get_width()+10,
+                             chatText.get_height()+10)
+            pg.draw.rect(screen, bubbleColor, bubble, border_radius=5)
+            screen.blit(chatText, (bubble.x+5, bubble.y+5))
+            bubbleY += chatText.get_height()+15
+        # update max width of textbox if text overflows
+        # textBox.w = max(100, textSurface.get_width()+10)
+
+        pg.display.flip()
+
+    pg.quit()
 
 if __name__ == "__main__":
     main()
