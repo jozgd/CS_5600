@@ -5,8 +5,16 @@ import pickle
 import socket
 from util.helper_functions import *
 
-# messages for ids 0, 1, 2
+# messages for ids 1, 2, 3
 all_convos = []
+
+all_convos.append(chatConvo(2, 1, [
+    chatMessage('msg', 2, 1, 'hey, what\'s up?'),
+    chatMessage('msg', 1, 2, 'not much, hbu?'),
+    chatMessage('msg', 2, 1, 'meh, same old same old'),
+    chatMessage('msg', 1, 2, 'how have classes been?'),
+    chatMessage('msg', 2, 1, 'horrible as always :/'),
+]))
 
 # Generic function for server to handle data received from client
 def recvFromClient(c):
@@ -30,7 +38,7 @@ def recvFromClient(c):
 def verifyIdentity(c, req):
     id = req.data
     valid = True
-    if id not in [0,1,2]:
+    if id < 1:
         valid = False
     print('Client ID', id, 'is' if valid else 'is not', 'valid.')
     sendData(c, dataToSend('id', valid))
@@ -80,9 +88,8 @@ def updateConvo(c, req):
     for i in range(len(all_convos)):
         if all_convos[i].isInChat(newConvo.user1, newConvo.user2):
             all_convos[i] = newConvo
-            break
-        sendData(c, dataToSend('ok'))
-        return
+            sendData(c, dataToSend('ok'))
+            return
     all_convos.append(newConvo)
     sendData(c, dataToSend('ok'))
 

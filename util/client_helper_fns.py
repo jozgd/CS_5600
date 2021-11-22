@@ -20,7 +20,7 @@ def sendToServer(pkg):
     return resp
 
 
-# validate client identity (for login)
+# validate client identity (for login) (for CLI)
 def validateIdentity():
     valid = False
     while not valid:
@@ -35,7 +35,7 @@ def validateIdentity():
     return id
 
 
-# validate user identity (when selecting user to chat with)
+# validate user identity (when selecting user to chat with) (for CLI)
 def selectUser():
     valid = False
     while not valid:
@@ -49,7 +49,7 @@ def selectUser():
     return recvID
 
 
-# check if user 'id' exists
+# check if user 'id' exists (for gui, in place of validateIdentity and selectUser)
 def userExists(id):
     resp = sendToServer(dataToSend('id', id))
     return resp.data
@@ -84,11 +84,24 @@ def getConvo(id, otherID):
     return sendToServer(dataToSend('request', ['convo', id, otherID]))
 
 
-# client writes and sends a message
+# client writes and sends a message (for CLI)
 def writeSendMsg(id, recvID):
     # todo: allow option to start game
     msg = str(input('Write your message below. (Press ENTER to send.)\n'))
     msgObj = chatMessage('msg', id, recvID, msg)
+    convo = getConvo(id,recvID).data
+    if not convo:
+        convo = chatConvo(id, recvID, [msgObj])
+    else:
+        convo.addMessage(msgObj)
+    ok = sendToServer(dataToSend('convo', convo))
+    if ok.type == 'error':
+        print(ok.data)
+    return
+
+
+# client sends a premade message object (for gui)
+def sendMsg(id, recvID, msgObj):
     convo = getConvo(id,recvID).data
     if not convo:
         convo = chatConvo(id, recvID, [msgObj])
