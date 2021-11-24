@@ -15,7 +15,7 @@ def sendToServer(pkg):
     s = socket.socket()
     s.connect(('127.0.0.1', port))
     sendData(s, pkg)
-    resp = pickle.loads(s.recv(1024))
+    resp = pickle.loads(s.recv(4096))
     s.close()
     return resp
 

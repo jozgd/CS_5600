@@ -4,21 +4,18 @@
 import pickle
 import socket
 from util.helper_functions import *
+from tictactoe import tictactoe
 
 # messages for ids 1, 2, 3
 all_convos = []
 
 all_convos.append(chatConvo(2, 1, [
-    chatMessage('msg', 2, 1, 'hey, what\'s up?'),
-    chatMessage('msg', 1, 2, 'not much, hbu?'),
-    chatMessage('msg', 2, 1, 'meh, same old same old'),
-    chatMessage('msg', 1, 2, 'how have classes been?'),
-    chatMessage('msg', 2, 1, 'horrible as always :/'),
+    chatMessage('game', 1, 2, tictactoe(1,2))
 ]))
 
 # Generic function for server to handle data received from client
 def recvFromClient(c):
-    data = pickle.loads(c.recv(1024))
+    data = pickle.loads(c.recv(4096))
     type = data.type
     if type == 'id':
         verifyIdentity(c,data)

@@ -6,11 +6,15 @@ import client as c
 import util.helper_functions as hf
 import util.client_helper_fns as chf
 
+pg.init()
+import ttt_gui
+
 defaultFont = pg.font.SysFont('Calibri', 28)
 msgFont = pg.font.SysFont('Calibri', 22)
 msgColor = pg.color.Color('white')
 sendBubbleColor = pg.color.Color('royalblue')
 recvBubbleColor = pg.color.Color('gray')
+gameBubbleColor = pg.color.Color('green2')
 tbActiveColor = pg.color.Color('azure2')
 tbInactiveColor = pg.color.Color('azure3')
 
@@ -27,6 +31,7 @@ class chatWindow:
         self.bg.fill((225, 225, 225))
 
         self.convo = None
+        self.gameMsgs = []
 
         # make textbox and textbox accessories
         self.textBox = pg.Rect(50, 516, 924, 42)
@@ -52,22 +57,78 @@ class chatWindow:
         bubbleY = self.chatBox.y+5
         # print all chat messages
         for msg in self.convo.msgList:
+            if msg.type == 'game':
+                game = msg.data
+                bubble = None
+                chatText = None
+                # other user took their turn
+                if msg.sender == self.otherID:
+                    # it's currently the client user's turn
+                    if game.active and game.currentTurn == self.clientID and not game.moveCompleted:
+                        chatText = msgFont.render('It\'s your turn against user {}!'.format(self.otherID), True, (225, 225, 225))
+                        bubble = pg.Rect(bubbleXrecv, bubbleY, chatText.get_width()+10,
+                                         chatText.get_height()+10)
+                        pg.draw.rect(self.screen, gameBubbleColor, bubble, border_radius=5)
+                        self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                    # client user already took their turn, but game is not over
+                    elif game.active and game.moveCompleted:
+                        chatText = msgFont.render('User {} played their turn.'.format(self.otherID), True, (25,25,25))
+                        bubble = pg.Rect(bubbleXrecv, bubbleY, chatText.get_width()+10,
+                                         chatText.get_height()+10)
+                        pg.draw.rect(self.screen, recvBubbleColor, bubble, border_radius=5)
+                        self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                    # if receiving game is inactive, then either that player won or it's a tie
+                    elif not game.active:
+                        chatText = msgFont.render('Game over - ' + str('user {} won!'.format(self.otherID) if game.winner == self.otherID else 'it\'s a tie!'), True, (25,25,25))
+                        bubble = pg.Rect(bubbleXrecv, bubbleY, chatText.get_width()+10,
+                                         chatText.get_height()+10)
+                        pg.draw.rect(self.screen, recvBubbleColor, bubble, border_radius=5)
+                        self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                # client user took their turn
+                elif msg.sender == self.clientID:
+                    # new game - it's client user's turn
+                    if game.active and game.currentTurn == self.clientID and not game.moveCompleted:
+                        chatText = msgFont.render('It\'s your turn against user {}!'.format(self.otherID), True, msgColor)
+                        bubbleXsend = self.chatBox.right-5-chatText.get_width()-10
+                        bubble = pg.Rect(bubbleXsend, bubbleY, chatText.get_width()+10,
+                                         chatText.get_height()+10)
+                        pg.draw.rect(self.screen, gameBubbleColor, bubble, border_radius=5)
+                        self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                    elif game.active and game.currentTurn == self.otherID and not game.moveCompleted:
+                        pass
+                    else:
+                        # game is still going
+                        if game.active and game.currentTurn == self.clientID and game.moveCompleted:
+                            chatText = msgFont.render('You took your turn against user {}.'.format(self.otherID), True, msgColor)
+                        # either client user won or it's a tie
+                        elif not game.active:
+                            chatText = msgFont.render('Game over - ' + str('you won!' if game.winner == self.clientID else 'it\'s a tie!'), True, msgColor)
+                        bubbleXsend = self.chatBox.right-5-chatText.get_width()-10
+                        bubble = pg.Rect(bubbleXsend, bubbleY, chatText.get_width()+10,
+                                         chatText.get_height()+10)
+                        pg.draw.rect(self.screen, sendBubbleColor, bubble, border_radius=5)
+                        self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                # add to mapping of bubbles/games to check for clicks
+                if bubble:
+                    self.gameMsgs.append([bubble,game])
+            elif msg.type == 'msg':
             # sender's bubble is blue on the right
-            if msg.sender == self.clientID:
-                chatText = msgFont.render(msg.data, True, msgColor)
-                bubbleXsend = self.chatBox.right-5-chatText.get_width()-10
-                bubble = pg.Rect(bubbleXsend, bubbleY, chatText.get_width()+10,
-                                 chatText.get_height()+10)
-                pg.draw.rect(self.screen, sendBubbleColor, bubble, border_radius=5)
-                self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
-            # receiver's bubble is gray on the left
-            else:
-                chatText = msgFont.render(msg.data, True, (25,25,25))
-                bubble = pg.Rect(bubbleXrecv, bubbleY, chatText.get_width()+10,
-                                 chatText.get_height()+10)
-                pg.draw.rect(self.screen, recvBubbleColor, bubble, border_radius=5)
-                self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
-            bubbleY += chatText.get_height()+15
+                if msg.sender == self.clientID:
+                    chatText = msgFont.render(msg.data, True, msgColor)
+                    bubbleXsend = self.chatBox.right-5-chatText.get_width()-10
+                    bubble = pg.Rect(bubbleXsend, bubbleY, chatText.get_width()+10,
+                                     chatText.get_height()+10)
+                    pg.draw.rect(self.screen, sendBubbleColor, bubble, border_radius=5)
+                    self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+                # receiver's bubble is gray on the left
+                else:
+                    chatText = msgFont.render(msg.data, True, (25,25,25))
+                    bubble = pg.Rect(bubbleXrecv, bubbleY, chatText.get_width()+10,
+                                     chatText.get_height()+10)
+                    pg.draw.rect(self.screen, recvBubbleColor, bubble, border_radius=5)
+                    self.screen.blit(chatText, (bubble.x+5, bubble.y+5))
+            if chatText:
+                bubbleY += chatText.get_height()+15
 
 
     def runWindow(self):
@@ -84,6 +145,10 @@ class chatWindow:
                 if e.type == MOUSEBUTTONDOWN:
                     if self.backBox.collidepoint(e.pos):
                         return True
+                    # check if game message was clicked, and display game if so
+                    for msg in self.gameMsgs:
+                        if msg[0].collidepoint(e.pos):
+                            return msg[1]
                     self.tbActive = True if self.textBox.collidepoint(e.pos) else False
                 if self.tbActive:
                     if e.type == KEYDOWN:

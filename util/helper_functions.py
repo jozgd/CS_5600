@@ -48,6 +48,7 @@ class chatMessage:
         #     game: game object (for now)
         self.data = data
 
+    # for CLI only
     def printMsg(self, viewer):
         # if type == 'msg', just print the text
         # if type == 'game', allow the user to take their turn
@@ -69,7 +70,18 @@ class chatConvo:
 
     # adds message to msgList
     def addMessage(self, msg):
-        self.msgList.append(msg)
+        if msg.type == 'msg':
+            self.msgList.append(msg)
+        elif msg.type == 'game':
+            gameToReplace = None
+            for m in self.msgList:
+                if m.type == 'game' and m.data.id == msg.data.id:
+                    gameToReplace = m
+                    break
+            if gameToReplace:
+                self.msgList[self.msgList.index(gameToReplace)] = msg
+            else:
+                self.msgList.append(msg)
 
     # checks if user(s) belong to chat. not sure if this will be useful when
     #   file management is implemented
