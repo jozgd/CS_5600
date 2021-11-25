@@ -111,3 +111,6 @@ def sendMsg(id, recvID, msgObj):
     if ok.type == 'error':
         print(ok.data)
     return
+
+def getNextGameID():
+    return sendToServer(dataToSend('gameID')).data

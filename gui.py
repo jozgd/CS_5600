@@ -43,7 +43,6 @@ def main():
                     if gameUpdate[0].active:
                         gameMsg = hf.chatMessage('game', clientID, otherID, gameUpdate[1])
                         chf.sendMsg(clientID, otherID, gameMsg)
-
                 elif gameUpdate == True:
                     goback = chatwindow.main(screen, clientID, otherID)
                 else:

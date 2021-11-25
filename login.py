@@ -60,7 +60,7 @@ class loginWindow:
                     self.tbActive = True if self.textBox.collidepoint(e.pos) else False
                 if self.tbActive:
                     if e.type == KEYDOWN:
-                        if e.key == K_RETURN:
+                        if e.key in (K_RETURN, K_KP_ENTER):
                             login = self.checkLogin()
                             if login:
                                 return (True, self.clientID)

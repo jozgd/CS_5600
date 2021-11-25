@@ -9,9 +9,9 @@ from tictactoe import tictactoe
 # messages for ids 1, 2, 3
 all_convos = []
 
-all_convos.append(chatConvo(2, 1, [
-    chatMessage('game', 1, 2, tictactoe(1,2))
-]))
+# all_convos.append(chatConvo(2, 1, [
+#     chatMessage('game', 1, 2, tictactoe(1,2))
+# ]))
 
 # Generic function for server to handle data received from client
 def recvFromClient(c):
@@ -27,6 +27,8 @@ def recvFromClient(c):
         getUnreadMsgs(c,data)
     elif type == 'markRead':
         markRead(c,data)
+    elif type == 'gameID':
+        getNextGameID(c)
     else:
         sendData(c, dataToSend('error', 'Server was unable to parse received data.'))
     return
@@ -118,3 +120,15 @@ def markRead(c, req):
             break
     sendData(c, dataToSend('ok'))
     return
+
+
+# returns the expected ID of the NEXT NEW GAME OBJECT
+def getNextGameID(c):
+    max_id = 0
+    for convo in all_convos:
+        for msg in convo.msgList:
+            if msg.type == 'game':
+                game = msg.data
+                if game.id > max_id:
+                    max_id = game.id
+    sendData(c, dataToSend('gameID', max_id+1))

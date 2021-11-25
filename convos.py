@@ -5,6 +5,7 @@ from pygame.locals import *
 import client as c
 import util.helper_functions as hf
 import util.client_helper_fns as chf
+from math import log10, floor
 
 defaultFont = pg.font.SysFont('Calibri', 28)
 tbActiveColor = pg.color.Color('azure2')
@@ -32,13 +33,18 @@ class convoWindow:
         # make convobox (to hold displayed list of conversations) and convobox accessories
         self.convoBox = pg.Rect(50, 50, 924, 451)
         self.cbColor = pg.color.Color((255,255,255))
+        self.convoPanel = None
+        self.scroll_y = 1.0
+        self.offset = 0
 
         self.title = defaultFont.render('Conversations', True, (25,25,25))
         self.titleBox = self.title.get_rect(center=(512, 25))
 
-    def printConvoList(self):
-        bubbleX = self.convoBox.x+5
-        bubbleY = self.convoBox.y+5
+    def createConvoList(self):
+        panelSize = (924, max(1, len(self.convoList))*43 + 5)
+        panelSurface = pg.Surface(panelSize, pg.SRCALPHA)
+        bubbleX = 5
+        bubbleY = 5
         self.convoButtons = {}
         if self.convoList == []:
             listText = defaultFont.render('No conversations to show.', True, (25,25,25))
@@ -47,11 +53,25 @@ class convoWindow:
         for id in self.convoList:
             self.convoButtons[id] = []
             listText = defaultFont.render('User ' + str(id), True, (25,25,25))
-            listBox = pg.Rect(bubbleX, bubbleY, self.convoBox.right-60, listText.get_height()+10)
-            pg.draw.rect(self.screen, tbInactiveColor, listBox)
-            self.screen.blit(listText, (listBox.x+5, listBox.y+5))
+            listBox = pg.Rect(bubbleX, bubbleY, 919, listText.get_height()+10)
+            pg.draw.rect(panelSurface, tbInactiveColor, listBox)
+            panelSurface.blit(listText, (listBox.x+5, listBox.y+5))
             self.convoButtons[id] += [listText, listBox]
             bubbleY += listText.get_height()+15
+        self.convoPanel = panelSurface
+
+    def drawConvoList(self, scroll=1.0):
+        self.createConvoList()
+        dy = self.convoPanel.get_height() - 451
+        if dy > 0:
+            self.offset = int(dy*scroll)
+            tempRect = self.convoPanel.get_rect()
+            subRect = pg.Rect(0, self.offset, 924, 451)
+            subRectSurface = self.convoPanel.subsurface(subRect)
+            surfaceToBlit = subRectSurface
+        else:
+            surfaceToBlit = self.convoPanel
+        return surfaceToBlit
 
     def runWindow(self):
         # clock tick object for fps
@@ -64,18 +84,31 @@ class convoWindow:
                 # quit the app
                 if e.type == QUIT:
                     return (False, None)
-                if e.type == MOUSEBUTTONDOWN:
+                if e.type == MOUSEWHEEL:
+                    if e.y == 1:
+                        self.scroll_y = max(0, self.scroll_y-0.1)
+                        if self.scroll_y != 0.0:
+                            self.scroll_y = round(self.scroll_y, -int(floor(log10(abs(self.scroll_y)))))
+                    elif e.y == -1:
+                        self.scroll_y = min(1, self.scroll_y+0.1)
+                        if self.scroll_y != 0.0:
+                            self.scroll_y = round(self.scroll_y, -int(floor(log10(abs(self.scroll_y)))))
+                    break
+                if e.type == MOUSEBUTTONDOWN and e.button == 1:
                     self.tbActive = True if self.textBox.collidepoint(e.pos) else False
-                    for id in self.convoList:
-                        for item in self.convoButtons[id]:
-                            tempItem = item
-                            if isinstance(item, pg.Surface):
-                                tempItem = item.get_rect()
-                            if tempItem.collidepoint(e.pos):
+                    if self.convoBox.collidepoint(e.pos):
+                        for id in self.convoList:
+                            # this is necessary to calculate where the mouse is *trying* to click...
+                            #   the coordinates of each bubble are relative to the subsurface they're
+                            #   on whereas the coordinates of the mouse are relative to the screen,
+                            #   so it gets weird if you don't calculate the mouse position with
+                            #   scrolling and border offsets taken into account
+                            mousePos = (e.pos[0]-50, e.pos[1]-50+self.offset)
+                            if self.convoButtons[id][1].collidepoint(mousePos):
                                 return (True, id)
                 if self.tbActive:
                     if e.type == KEYDOWN:
-                        if e.key == K_RETURN:
+                        if e.key in (K_RETURN, K_KP_ENTER):
                             valid = False
                             try:
                                 otherID = int(self.userText)
@@ -112,7 +145,8 @@ class convoWindow:
             # draw conversation list
             pg.draw.rect(self.screen, self.cbColor, self.convoBox)
             self.convoList = chf.getChats(self.clientID)
-            self.printConvoList()
+            convoPanel = self.drawConvoList(self.scroll_y)
+            self.screen.blit(convoPanel, self.convoBox)
             # finally, update the screen
             pg.display.flip()
 

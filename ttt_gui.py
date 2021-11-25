@@ -3,7 +3,7 @@
 from tictactoe import tictactoe
 import pygame as pg
 from pygame.locals import *
-import time
+import util.client_helper_fns as chf
 import copy
 
 testing = True
@@ -93,7 +93,8 @@ class tttGUI:
                                         gameOver = self.game.checkGameEnded()
                                         self.game.moveCompleted = True
                                         gameToReturn = copy.deepcopy(self.game)
-                                        gameToReturn.id += 1
+                                        nextGameID = chf.getNextGameID()
+                                        gameToReturn.id = nextGameID
                                         gameToReturn.swapTurn()
                                         gameToReturn.moveCompleted = False
                                         return [self.game, gameToReturn]

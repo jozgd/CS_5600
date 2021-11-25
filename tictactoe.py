@@ -1,16 +1,12 @@
 # Gabrielle
 
-import socket
-
-game_id = 1
-
 class tictactoe:
     # I assume we'd want to have separate instances of each active game
     #     stored on the server
     # p1 and p2 should be the usernames of the people playing (strings or ints)
-    def __init__(self, p1, p2):
+    def __init__(self, p1, p2, id=1):
         global game_id
-        self.id = 1
+        self.id = id
         self.active = True
         self.board = [['   ', '   ', '   '],
                       ['   ', '   ', '   '],
