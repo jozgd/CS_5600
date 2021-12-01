@@ -1,6 +1,6 @@
 # Gabrielle
 # Functions for use by server.py
-
+import os
 import pickle
 import socket
 from util.helper_functions import *
@@ -60,9 +60,13 @@ def clientRequest(c, req):
 def getOpenChats(c, req):
     req_user = req.data[1]
     chatting_users = []
-    for convo in all_convos:
-        if convo.isInChat(req_user) and int(convo.isInChat(req_user)) not in chatting_users:
-            chatting_users.append(int(convo.isInChat(req_user)))
+    #for convo in all_convos:
+    #    if convo.isInChat(req_user) and int(convo.isInChat(req_user)) not in chatting_users:
+    #        chatting_users.append(int(convo.isInChat(req_user)))
+    for (root,dirs,files) in os.walk('users/' + str(req_user)):
+        for x in files:
+            chatting_users.append(x[:-4])
+
     sendData(c, dataToSend('chats', chatting_users))
     return
 
@@ -71,25 +75,49 @@ def getConvo(c, req):
     clientID = req.data[1]
     otherID = req.data[2]
     convoToSend = None
-    for convo in all_convos:
-        if convo.isInChat(clientID, otherID):
+    #for convo in all_convos:
+    #    if convo.isInChat(clientID, otherID):
+    #        for msg in convo.msgList:
+    #            if msg.receiver == clientID and msg.unread == True:
+    #                msg.unread = False
+    #        convoToSend = convo
+    #        break
+
+    filename = 'users/' + str(clientID) + '/' + str(otherID) + '.pkl'
+    os.makedirs(os.path.dirname(filename), exist_ok=True) # make directory if not exist
+    try:
+        with open(filename, 'r+b') as f:
+            convo = pickle.load(f)
             for msg in convo.msgList:
                 if msg.receiver == clientID and msg.unread == True:
                     msg.unread = False
-            convoToSend = convo
-            break
+        convoToSend = convo
+    except:
+        print('fails')
+
     sendData(c, dataToSend('convo', convoToSend))
 
 
 # replace existing convo with updated one
 def updateConvo(c, req):
     newConvo = req.data
-    for i in range(len(all_convos)):
-        if all_convos[i].isInChat(newConvo.user1, newConvo.user2):
-            all_convos[i] = newConvo
-            sendData(c, dataToSend('ok'))
-            return
-    all_convos.append(newConvo)
+    # for i in range(len(all_convos)):
+    #     if all_convos[i].isInChat(newConvo.user1, newConvo.user2):
+    #         all_convos[i] = newConvo
+    #         sendData(c, dataToSend('ok'))
+    #         return
+    # all_convos.append(newConvo)
+
+    filename1 = 'users/' + str(newConvo.user1) + '/' + str(newConvo.user2) + '.pkl' # file path
+    os.makedirs(os.path.dirname(filename1), exist_ok=True) # make directory if not exist
+    with open(filename1, 'w+b') as f: # dump binary
+        pickle.dump(newConvo,f)
+
+    filename2 = 'users/' + str(newConvo.user2) + '/' + str(newConvo.user1) + '.pkl' # file path
+    os.makedirs(os.path.dirname(filename2), exist_ok=True) # make directory if not exist
+    with open(filename2, 'w+b') as f: # dump binary
+        pickle.dump(newConvo,f)
+
     sendData(c, dataToSend('ok'))
 
 
@@ -104,12 +132,21 @@ def getUnreadMsgs(c, req):
                 unreadMsgs = True
                 chatting_users.append(msg.sender)
                 break
+
+    for (root,dirs,files) in os.walk('users/' + str(req_user)):
+        for x in files:
+            chatting_users.append(x[:-4])
+    for usr in chatting_users:
+        with open('users/' + str(req_user) + '/' + str(usr) + '.pkl') as f:
+            convo = pickle.load(f)
+        print(convo.msgList)
+
     sendData(c, dataToSend('unread', (unreadMsgs, chatting_users)))
     return
 
 # mark messages as read
 # I don't think this gets used anywhere right now, but it might be useful later
-def markRead(c, req):
+def markRead(c, req): # unused?
     recv = req.data[0]
     send = req.data[1]
     for convo in all_convos:
