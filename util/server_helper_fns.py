@@ -8,6 +8,7 @@ from tictactoe import tictactoe
 
 # messages for ids 1, 2, 3
 all_convos = []
+maxGameID = 0
 
 # all_convos.append(chatConvo(2, 1, [
 #     chatMessage('game', 1, 2, tictactoe(1,2))
@@ -65,7 +66,13 @@ def getOpenChats(c, req):
     #        chatting_users.append(int(convo.isInChat(req_user)))
     for (root,dirs,files) in os.walk('users/' + str(req_user)):
         for x in files:
-            chatting_users.append(x[:-4])
+            id = x[:-4]
+            try:
+                id = int(id)
+            except:
+                print('failed to read user id', id)
+                continue
+            chatting_users.append(id)
 
     sendData(c, dataToSend('chats', chatting_users))
     return
@@ -161,11 +168,14 @@ def markRead(c, req): # unused?
 
 # returns the expected ID of the NEXT NEW GAME OBJECT
 def getNextGameID(c):
-    max_id = 0
-    for convo in all_convos:
-        for msg in convo.msgList:
-            if msg.type == 'game':
-                game = msg.data
-                if game.id > max_id:
-                    max_id = game.id
-    sendData(c, dataToSend('gameID', max_id+1))
+    # max_id = 0
+    # for convo in all_convos:
+    #     for msg in convo.msgList:
+    #         if msg.type == 'game':
+    #             game = msg.data
+    #             if game.id > max_id:
+    #                 max_id = game.id
+    # sendData(c, dataToSend('gameID', max_id+1))
+    global maxGameID
+    maxGameID += 1
+    sendData(c, dataToSend('gameID', maxGameID))
