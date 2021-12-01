@@ -48,12 +48,12 @@ class convoWindow:
         self.convoButtons = {}
         if self.convoList == []:
             listText = defaultFont.render('No conversations to show.', True, (25,25,25))
-            listBox = listText.get_rect(center=(512,bubbleY+21))
-            self.screen.blit(listText, listBox)
+            listBox = listText.get_rect(center=(462,bubbleY+21))
+            panelSurface.blit(listText, listBox)
         for id in self.convoList:
             self.convoButtons[id] = []
             listText = defaultFont.render('User ' + str(id), True, (25,25,25))
-            listBox = pg.Rect(bubbleX, bubbleY, 919, listText.get_height()+10)
+            listBox = pg.Rect(bubbleX, bubbleY, 914, listText.get_height()+10)
             pg.draw.rect(panelSurface, tbInactiveColor, listBox)
             panelSurface.blit(listText, (listBox.x+5, listBox.y+5))
             self.convoButtons[id] += [listText, listBox]
