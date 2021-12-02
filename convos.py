@@ -8,8 +8,10 @@ import util.client_helper_fns as chf
 from math import log10, floor
 
 defaultFont = pg.font.SysFont('Calibri', 28)
+boldFont = pg.font.SysFont('Calibri', 28, bold=True)
 tbActiveColor = pg.color.Color('azure2')
 tbInactiveColor = pg.color.Color('azure3')
+unreadColor = pg.color.Color('royalblue')
 
 class convoWindow:
     def __init__(self, screen, id):
@@ -23,6 +25,7 @@ class convoWindow:
 
         self.convoList = []
         self.convoButtons = {}
+        self.unreadConvos = []
 
         # make textbox (for entering ID to make new convo) and textbox accessories
         self.textBox = pg.Rect(50, 516, 924, 42)
@@ -53,9 +56,14 @@ class convoWindow:
         for id in self.convoList:
             self.convoButtons[id] = []
             listText = defaultFont.render('User ' + str(id), True, (25,25,25))
+            if id in self.unreadConvos:
+                listText = boldFont.render('User ' + str(id), True, (25,25,25))
             listBox = pg.Rect(bubbleX, bubbleY, 914, listText.get_height()+10)
             pg.draw.rect(panelSurface, tbInactiveColor, listBox)
             panelSurface.blit(listText, (listBox.x+5, listBox.y+5))
+            if id in self.unreadConvos:
+                unreadIndicator = pg.Rect(listText.get_width()+15, listBox.centery-4, 8, 8)
+                pg.draw.rect(panelSurface, unreadColor, unreadIndicator, border_radius=4)
             self.convoButtons[id] += [listText, listBox]
             bubbleY += listText.get_height()+15
         self.convoPanel = panelSurface
@@ -145,6 +153,9 @@ class convoWindow:
             # draw conversation list
             pg.draw.rect(self.screen, self.cbColor, self.convoBox)
             self.convoList = chf.getChats(self.clientID)
+            unreadMsgs = chf.getUnreadMsgs(self.clientID)
+            if unreadMsgs[0]:
+                self.unreadConvos = unreadMsgs[1]
             convoPanel = self.drawConvoList(self.scroll_y)
             self.screen.blit(convoPanel, self.convoBox)
             # finally, update the screen

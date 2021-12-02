@@ -52,6 +52,8 @@ class chatWindow:
         self.back = defaultFont.render('Back', True, (25,25,25))
         self.backBox = self.back.get_rect(center=(15+(self.back.get_width()/2), 25))
 
+        self.unreadIndicator = pg.Rect(self.backBox.topright[0]+3, self.backBox.topright[1]-3, 8, 8)
+
         self.newGameLabel = defaultFont.render('+', True, (255,255,255))
         self.newGameButton = pg.Rect(50, 516, 42, 42)
 
@@ -197,6 +199,9 @@ class chatWindow:
                 self.convo = hf.chatConvo(self.clientID, self.otherID)
             msgPanel = self.drawMessagePanel(self.scroll_y)
             self.screen.blit(msgPanel, self.chatBox)
+            unreadMsgs = chf.getUnreadMsgs(self.clientID)
+            if unreadMsgs[0]:
+                pg.draw.rect(self.screen, sendBubbleColor, self.unreadIndicator, border_radius=4)
 
             for e in pg.event.get():
                 # quit the app

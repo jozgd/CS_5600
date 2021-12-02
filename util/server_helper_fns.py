@@ -100,7 +100,18 @@ def getConvo(c, req):
                     msg.unread = False
         convoToSend = convo
     except:
-        print('fails')
+        # print('fails')
+        pass
+    if convoToSend:
+        # push updated conversation to pickle files
+        filename1 = 'users/' + str(convoToSend.user1) + '/' + str(convoToSend.user2) + '.pkl' # file path
+        os.makedirs(os.path.dirname(filename1), exist_ok=True) # make directory if not exist
+        with open(filename1, 'w+b') as f: # dump binary
+            pickle.dump(convoToSend,f)
+        filename2 = 'users/' + str(convoToSend.user2) + '/' + str(convoToSend.user1) + '.pkl' # file path
+        os.makedirs(os.path.dirname(filename2), exist_ok=True) # make directory if not exist
+        with open(filename2, 'w+b') as f: # dump binary
+            pickle.dump(convoToSend,f)
 
     sendData(c, dataToSend('convo', convoToSend))
 
@@ -133,22 +144,38 @@ def getUnreadMsgs(c, req):
     unreadMsgs = False
     req_user = req.data
     chatting_users = []
-    for convo in all_convos:
-        for msg in convo.msgList:
-            if msg.receiver == req_user and msg.unread == True and msg.sender not in chatting_users:
-                unreadMsgs = True
-                chatting_users.append(msg.sender)
-                break
+    unread_users = []
+    # for convo in all_convos:
+    #     for msg in convo.msgList:
+    #         if msg.receiver == req_user and msg.unread == True and msg.sender not in chatting_users:
+    #             unreadMsgs = True
+    #             chatting_users.append(msg.sender)
+    #             break
 
     for (root,dirs,files) in os.walk('users/' + str(req_user)):
         for x in files:
-            chatting_users.append(x[:-4])
+            id = x[:-4]
+            try:
+                id = int(id)
+            except:
+                print('failed to read user id', id)
+                continue
+            chatting_users.append(id)
     for usr in chatting_users:
-        with open('users/' + str(req_user) + '/' + str(usr) + '.pkl') as f:
-            convo = pickle.load(f)
-        print(convo.msgList)
+        try:
+            with open('users/' + str(req_user) + '/' + str(usr) + '.pkl', 'r+b') as f:
+                convo = pickle.load(f)
+                for msg in convo.msgList:
+                    if msg.receiver == req_user and msg.unread == True and msg.sender not in unread_users:
+                        unreadMsgs = True
+                        unread_users.append(msg.sender)
+                        break
+        except:
+            # print('fails')
+            pass
+        # print(convo.msgList)
 
-    sendData(c, dataToSend('unread', (unreadMsgs, chatting_users)))
+    sendData(c, dataToSend('unread', (unreadMsgs, unread_users)))
     return
 
 # mark messages as read

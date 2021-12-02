@@ -70,7 +70,12 @@ def getChats(id):
     return chats.data
 
 
+def getUnreadMsgs(id):
+    return sendToServer(dataToSend('checkUnread', id)).data
+
+
 # unread indicators are shown as an asterisk after the conversation name
+# for CLI only
 def printChats(id, chats):
     unread = sendToServer(dataToSend('checkUnread', id))
     print('\nConversations')
