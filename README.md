@@ -1,1 +1,2 @@
 # CS_5600
+For PyMessage to work, the user will need Python and the PyGame module installed on their machine. To start the server, open a command prompt in the directory containing server.py and run the command ‘python3 server.py’ -- the server is ready to accept client requests when the terminal declares ‘socket binded to 12345’. To start the client application, open a command prompt in the directory containing gui.py and run the command ‘python3 gui.py’ -- this will open a new PyGame window prompting the user to login.
