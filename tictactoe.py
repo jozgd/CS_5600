@@ -1,12 +1,12 @@
 # Gabrielle
 
-import socket
-
 class tictactoe:
     # I assume we'd want to have separate instances of each active game
     #     stored on the server
     # p1 and p2 should be the usernames of the people playing (strings or ints)
-    def __init__(self, p1, p2):
+    def __init__(self, p1, p2, id=1):
+        global game_id
+        self.id = id
         self.active = True
         self.board = [['   ', '   ', '   '],
                       ['   ', '   ', '   '],
@@ -15,8 +15,10 @@ class tictactoe:
         # p1 will be X and p2 will be O by default
         # self.symbols = ('X','O')
         self.currentTurn = p1
+        self.moveCompleted = False
         self.winner = None
 
+    # for CLI only
     def printBoard(self):
         print('|'.join(self.board[0]))
         print('-'*11)
@@ -33,6 +35,7 @@ class tictactoe:
         else:
             symbol = 'X' if player == self.players[0] else 'O'
             self.board[row][col] = ' ' + symbol + ' '
+            self.moveCompleted = True
             return True
 
     def allSpacesFilled(self):
@@ -43,6 +46,9 @@ class tictactoe:
                     return False
         # tied game
         return True
+
+    def swapTurn(self):
+        self.currentTurn = (self.players[1] if self.currentTurn == self.players[0] else self.players[0])
 
     def checkWinner(self):
         # check horizontally
@@ -73,12 +79,25 @@ class tictactoe:
         # no winner yet
         return None
 
-    # def updateServer(self):
-    #     # TODO: implement socket stuff once the server is capable of storing
-    #     #     game data
-    #     pass
+    # for GUI only
+    def checkGameEnded(self):
+        self.winner = self.checkWinner()
+        if self.winner:
+            self.active = False
+            # self.printBoard()
+            # print('{} is the winner!'.format(self.winner))
+            return True
+        elif self.allSpacesFilled():
+            self.winner = 'nobody'
+            self.active = False
+            # self.printBoard()
+            # print('It\'s a tie!')
+            return True
+        return False
+
 
     # returns True if the game is still running, False if the game has ended
+    # for CLI only
     def playTurn(self, player):
         if not self.active:
             print('This game has ended. The winner was {}.'.format(self.winner))

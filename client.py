@@ -1,33 +1,42 @@
 
 import socket
+import pickle
 from tictactoe import tictactoe
+import util.helper_functions as hf
+import util.client_helper_fns as chf
 
-s = socket.socket()
+# client ID (0,1,2)
+id = None
 
-# Define the port on which you want to connect
-port = 12345
-
-# connect to the server on local computer
-s.connect(('127.0.0.1', port))
-
-# "Who are you?"
-print (s.recv(1024).decode())
-id = str(input())
-while id:
-    s.sendall(id.encode())
-    recvd_msg = s.recv(1024).decode()
-    if isinstance(recvd_msg, tictactoe):
-        if not recvd_msg.active:
-            recvd_msg.playTurn(id)
-        else:
-            recvd_msg.playTurn(id)
-            s.sendall(recvd_msg.encode())
-
-    else:
-        print(recvd_msg)
-        id = str(input())
-
-# id = str(input()[0])
-# s.sendall(id.encode())
-
-s.close()
+if __name__ == "__main__":
+    # "Who are you?"
+    id = chf.validateIdentity()
+    # get chats
+    chats = chf.getChats(id)
+    opt = None
+    # loop through menu
+    while True:
+        # chats will refresh every time menu is reloaded
+        # todo (when GUI is built): add auto-refresh
+        chats = chf.getChats(id)
+        chf.printChats(id, chats)
+        chf.printChatMenu(chats)
+        opt = str(input('Select an option (type \'~\' to exit): '))
+        print()
+        # client selected user chat to open
+        if opt in [str(x) for x in chats]:
+            otherID = int(opt)
+            convo = chf.getConvo(id, otherID)
+            for msg in convo.data.msgList:
+                msg.printMsg(id)
+            # todo: add in game functionality
+            opt2 = str(input('\nReply? (y/N) '))
+            if opt2 != '' and opt2[0].lower() == 'y':
+                chf.writeSendMsg(id, otherID)
+        # client wants to start a new conversation
+        elif opt == '+':
+            recvID = chf.selectUser()
+            chf.writeSendMsg(id, recvID)
+        # client wants to quit
+        elif opt == '~':
+            break
